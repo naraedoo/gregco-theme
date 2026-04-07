@@ -92,7 +92,7 @@ echo '<!-- FRONT PAGE ACTIVE -->';
 
 <div class="line_greg"></div>
   <aside class="subtitle">
-      <h2 class="title left up-on-scroll"> Projects_0 </h2>
+      <h2 class="title left up-on-scroll"> Work </h2>
     <a href="/work/" class="view-more up-on-scroll">View more</a>
   </aside>
         <?php

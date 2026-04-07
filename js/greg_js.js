@@ -265,12 +265,17 @@ card.addEventListener('mouseleave', () => {
     scrollInterval = setInterval(autoScroll, 20);
 });
 
-// 마우스 휠 이벤트 처리
+// 마우스 휠 이벤트: 페이지 세로 스크롤 허용 (preventDefault 제거)
+// 가로 스크롤은 자동 + 마우스오버 멈춤으로만 제어
 card.addEventListener('wheel', (event) => {
-    scrollPosition += event.deltaY * 0.5; // 마우스 휠 반응 속도 조절
-    card.scrollLeft = scrollPosition;
-    event.preventDefault();
-});
+    // deltaX(트랙패드 가로 스와이프)만 가로 스크롤에 반영
+    if (Math.abs(event.deltaX) > Math.abs(event.deltaY)) {
+        scrollPosition += event.deltaX * 0.5;
+        card.scrollLeft = scrollPosition;
+        event.preventDefault();
+    }
+    // 세로 스크롤(deltaY)은 막지 않음 → 페이지 아래로 자연스럽게 이동
+}, { passive: false });
 
 // 모바일 터치 이벤트 처리
 let touchStartX = 0;
