@@ -38,8 +38,15 @@
 ### 필터 작동 방식
 - 필터 버튼: `<button>` (링크 `<a>` 아님)
 - 카드에 `data-cat="strategy"` 같은 속성 부여
-- JS로 `opacity` + `transform` inline style 제어 (fade in/out)
+- JS로 `opacity` + `transform` inline style 제어 (fade in/out) ✅ 작동 확인
 - `up-on-scroll` 스크롤 애니메이션과 간섭 방지: inline style로 강제 덮어쓰기
+
+### FTP 업로드 주의사항
+- VSCode ftp-simple 사용 중
+- 파일 수정 후 `Cmd+S` → 자동 업로드
+- **로그인 상태에서만 변경사항이 즉시 보임** (캐시 우회)
+- 로그아웃 상태에서는 캐싱 플러그인 or 카페24 서버 캐시 때문에 이전 버전이 보일 수 있음
+- 캐시 플러그인 여부 확인 필요 (WP 관리자 → 플러그인)
 
 ### GitHub
 - 저장소: `naraedoo/gregco-theme` (main 브랜치)
@@ -51,10 +58,12 @@
   - `949f0fb` — 필터 버튼 + JS 필터 최초 적용
   - `39c360e` — fade in/out 버그 수정
   - `0872f0d` — up-on-scroll 간섭 방지 (inline style 방식)
+  - `8c48572` — withai.md 생성
 
 ---
 
 ## 다음 작업 후보
-- [ ] 필터 fade 애니메이션 최종 확인
+- [x] 필터 fade 애니메이션 완료 ✅
+- [ ] 캐시 플러그인 확인 및 로그아웃 상태에서도 즉시 반영되게 설정
 - [ ] 개별 Work 페이지 템플릿 설계
 - [ ] /insights 또는 /journal (뉴스/블로그) 구조 분리
