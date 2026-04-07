@@ -8,6 +8,7 @@
 | 플랫폼 | WordPress |
 | 제작자 | gregcompany |
 | 언어 | PHP, CSS, JavaScript |
+| 사이트 | https://greg.kr |
 | 레포지토리 | https://github.com/naraedoo/gregco-theme |
 
 Gregco 사이트를 위한 커스텀 WordPress 테마. 체커보드(격자) 갤러리 레이아웃과 다양한 포스트 템플릿을 지원하며, GSAP 기반의 스크롤 애니메이션과 Masonry 레이아웃을 제공합니다.
