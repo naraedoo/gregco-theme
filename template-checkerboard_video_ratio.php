@@ -292,12 +292,17 @@ document.addEventListener('DOMContentLoaded', function () {
         item.addEventListener('mouseout',  function () { tt.style.transform = 'translateY(0)'; vt.style.transform = 'translateY(100%)'; });
     });
 
-    // ====== 필터 (fade in/out) ======
-    var FADE      = 350;
-    var buttons   = document.querySelectorAll('.work-filter');
-    var items     = document.querySelectorAll('.template-gallery-item');
-    var timer     = null;
-    var ready     = false; // 초기 로드는 애니메이션 없이
+    // ====== 필터 (fade in/out — inline style로 up-on-scroll 간섭 방지) ======
+    var FADE    = 350;
+    var buttons = document.querySelectorAll('.work-filter');
+    var items   = document.querySelectorAll('.template-gallery-item');
+    var timer   = null;
+    var ready   = false;
+
+    // transition을 inline으로 강제 설정 (up-on-scroll 덮어쓰기 방지)
+    items.forEach(function (el) {
+        el.style.transition = 'opacity ' + FADE + 'ms ease, transform ' + FADE + 'ms ease';
+    });
 
     function setButtons(filter) {
         buttons.forEach(function (btn) {
@@ -307,9 +312,21 @@ document.addEventListener('DOMContentLoaded', function () {
         });
     }
 
+    function fadeOut(el) {
+        el.style.opacity   = '0';
+        el.style.transform = 'scale(0.97)';
+        el.style.pointerEvents = 'none';
+    }
+
+    function fadeIn(el) {
+        el.style.opacity   = '1';
+        el.style.transform = 'scale(1)';
+        el.style.pointerEvents = '';
+    }
+
     function apply(filter) {
         setButtons(filter);
-        if (!ready) return; // 첫 호출은 그냥 반환 (카드는 이미 표시됨)
+        if (!ready) return;
 
         clearTimeout(timer);
 
@@ -317,38 +334,42 @@ document.addEventListener('DOMContentLoaded', function () {
         items.forEach(function (el) {
             var show = filter === 'all' || el.dataset.cat === filter;
             if (!show && el.style.display !== 'none') {
-                el.classList.add('is-hiding');
+                fadeOut(el);
             }
         });
 
-        // Phase 2: fade out 완료 후 처리
+        // Phase 2: fade out 완료 후
         timer = setTimeout(function () {
             items.forEach(function (el) {
                 var show = filter === 'all' || el.dataset.cat === filter;
 
                 if (!show) {
-                    // 완전히 숨기기
                     el.style.display = 'none';
-                    el.classList.remove('is-hiding');
+                    el.style.opacity = '';
+                    el.style.transform = '';
+                    el.style.pointerEvents = '';
                 } else if (el.style.display === 'none') {
-                    // display:none → 보이게 + fade in
-                    el.style.display = '';
-                    el.classList.add('is-hiding');          // 일단 투명하게
+                    // 숨겨있던 카드 → fade in
+                    el.style.display  = '';
+                    el.style.opacity  = '0';
+                    el.style.transform = 'scale(0.97)';
                     requestAnimationFrame(function () {
                         requestAnimationFrame(function () {
-                            el.classList.remove('is-hiding'); // 다음 프레임에 transition 발동
+                            fadeIn(el);
                         });
                     });
                 } else {
-                    // 이미 보이던 카드는 그냥 유지
-                    el.classList.remove('is-hiding');
+                    fadeIn(el);
                 }
             });
         }, FADE);
     }
 
     apply('all');
-    ready = true; // 이후부터 애니메이션 활성화
+    ready = true;
+
+    // 초기 로드 후 모든 카드 opacity 강제 1로 (up-on-scroll 덮어쓰기)
+    items.forEach(function (el) { fadeIn(el); });
 
     buttons.forEach(function (btn) {
         btn.addEventListener('click', function () { apply(btn.dataset.filter); });
