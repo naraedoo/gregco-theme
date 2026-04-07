@@ -19,7 +19,6 @@ get_header();
     break-inside: avoid;
     margin-bottom: 0.9em;
     position: relative;
-    /* fade 애니메이션 */
     transition: opacity 0.35s ease, transform 0.35s ease;
     opacity: 1;
 }
@@ -170,34 +169,24 @@ svg#cursor {
     </article>
 
     <?php
-    // ====== 필터 버튼 (버튼 → 리프레시 없음) ======
     $ordered_slugs = ['all', 'strategy', 'branding', 'campaign', 'content', 'design'];
-
     $terms = get_terms(['taxonomy' => 'work_category', 'hide_empty' => false]);
 
     if (!is_wp_error($terms) && !empty($terms)) {
-
         $term_map = [];
         foreach ($terms as $t) $term_map[$t->slug] = $t;
 
         echo "<ul class='tagging list work-filters'>";
-
         foreach ($ordered_slugs as $slug) {
-            $name    = ($slug === 'all') ? 'All' : (isset($term_map[$slug]) ? $term_map[$slug]->name : null);
+            $name = ($slug === 'all') ? 'All' : (isset($term_map[$slug]) ? $term_map[$slug]->name : null);
             if (!$name) continue;
-
             $is_active = ($slug === 'all') ? ' is-active' : '';
             $pressed   = ($slug === 'all') ? 'true' : 'false';
-
             echo "<li class='up-on-scroll'>
-                    <button type='button' class='work-filter{$is_active}' data-filter='" . esc_attr($slug) . "' aria-pressed='{$pressed}'>
-                        {$name}
-                    </button>
+                    <button type='button' class='work-filter{$is_active}' data-filter='" . esc_attr($slug) . "' aria-pressed='{$pressed}'>{$name}</button>
                   </li>";
         }
-
         echo "</ul>";
-
     } else {
         echo "<p style='opacity:.6'>work_category 텀이 없습니다.</p>";
     }
@@ -210,9 +199,7 @@ svg#cursor {
 <?php endif; ?>
 
 <?php
-// ====== Work 카드 그리드 ======
-$current_page = get_queried_object();
-
+$current_page   = get_queried_object();
 $subpages_query = new WP_Query([
     'post_type'      => 'page',
     'post_parent'    => $current_page->ID,
@@ -227,11 +214,9 @@ if ($subpages_query->have_posts()) :
 <div class="template-gallery-grid">
 <?php while ($subpages_query->have_posts()) : $subpages_query->the_post();
 
-    // work_category 슬러그 → data-cat
     $work_terms   = get_the_terms(get_the_ID(), 'work_category');
     $primary_slug = (!is_wp_error($work_terms) && !empty($work_terms)) ? $work_terms[0]->slug : 'uncategorized';
 
-    // ACF
     $title_color         = get_field('title_color');
     $style               = $title_color ? "color: {$title_color}; border-color: {$title_color};" : '';
     $display_the_excerpt = get_field('display_the_excerpt');
@@ -246,7 +231,6 @@ if ($subpages_query->have_posts()) :
         elseif ($video_ratio == '4:3')  $padding_top = '75%';
         elseif ($video_ratio == '3:4')  $padding_top = '133.33%';
     }
-
     $no_media = !has_post_thumbnail() && !$video_file;
 ?>
     <div
@@ -255,7 +239,6 @@ if ($subpages_query->have_posts()) :
         style="<?php echo $no_media ? 'background-color: ' . esc_attr(get_field('background_color')) . ';' : ''; ?>"
     >
         <a href="<?php the_permalink(); ?>">
-
             <?php if ($video_file) :
                 $video_url = $video_file['url'];
                 if ($is_original) : ?>
@@ -291,7 +274,6 @@ if ($subpages_query->have_posts()) :
                     <span class="view-text" style="<?php echo esc_attr($style); ?>">View</span>
                 </div>
             <?php endif; ?>
-
         </a>
     </div>
 
@@ -307,54 +289,70 @@ document.addEventListener('DOMContentLoaded', function () {
         var vt = item.querySelector('.view-text');
         if (!tt || !vt) return;
         item.addEventListener('mouseover', function () { tt.style.transform = 'translateY(-100%)'; vt.style.transform = 'translateY(0)'; });
-        item.addEventListener('mouseout',  function () { tt.style.transform = 'translateY(0)';    vt.style.transform = 'translateY(100%)'; });
+        item.addEventListener('mouseout',  function () { tt.style.transform = 'translateY(0)'; vt.style.transform = 'translateY(100%)'; });
     });
 
-    // ====== 카테고리 필터 (fade 애니메이션 + 리프레시 없음) ======
-    var FADE_MS = 350; // CSS transition 시간과 맞춤
-    var buttons = document.querySelectorAll('.work-filter');
-    var items   = document.querySelectorAll('.template-gallery-item');
-    var timer   = null;
+    // ====== 필터 (fade in/out) ======
+    var FADE      = 350;
+    var buttons   = document.querySelectorAll('.work-filter');
+    var items     = document.querySelectorAll('.template-gallery-item');
+    var timer     = null;
+    var ready     = false; // 초기 로드는 애니메이션 없이
 
-    function apply(filter) {
-        // 버튼 active 상태 즉시 변경
+    function setButtons(filter) {
         buttons.forEach(function (btn) {
             var on = btn.dataset.filter === filter;
             btn.classList.toggle('is-active', on);
             btn.setAttribute('aria-pressed', on ? 'true' : 'false');
         });
+    }
 
-        // 1단계: 숨겨야 할 카드 fade out
+    function apply(filter) {
+        setButtons(filter);
+        if (!ready) return; // 첫 호출은 그냥 반환 (카드는 이미 표시됨)
+
+        clearTimeout(timer);
+
+        // Phase 1: 숨겨야 할 카드 fade out
         items.forEach(function (el) {
-            var show = (filter === 'all') || (el.dataset.cat === filter);
-            if (!show) {
+            var show = filter === 'all' || el.dataset.cat === filter;
+            if (!show && el.style.display !== 'none') {
                 el.classList.add('is-hiding');
             }
         });
 
-        // 2단계: fade out 끝난 후 display:none + 보일 카드 fade in
-        clearTimeout(timer);
+        // Phase 2: fade out 완료 후 처리
         timer = setTimeout(function () {
             items.forEach(function (el) {
-                var show = (filter === 'all') || (el.dataset.cat === filter);
-                if (show) {
+                var show = filter === 'all' || el.dataset.cat === filter;
+
+                if (!show) {
+                    // 완전히 숨기기
+                    el.style.display = 'none';
+                    el.classList.remove('is-hiding');
+                } else if (el.style.display === 'none') {
+                    // display:none → 보이게 + fade in
                     el.style.display = '';
-                    // 다음 프레임에 클래스 제거해야 transition 발동
+                    el.classList.add('is-hiding');          // 일단 투명하게
                     requestAnimationFrame(function () {
-                        el.classList.remove('is-hiding');
+                        requestAnimationFrame(function () {
+                            el.classList.remove('is-hiding'); // 다음 프레임에 transition 발동
+                        });
                     });
                 } else {
-                    el.style.display = 'none';
+                    // 이미 보이던 카드는 그냥 유지
+                    el.classList.remove('is-hiding');
                 }
             });
-        }, FADE_MS);
+        }, FADE);
     }
+
+    apply('all');
+    ready = true; // 이후부터 애니메이션 활성화
 
     buttons.forEach(function (btn) {
         btn.addEventListener('click', function () { apply(btn.dataset.filter); });
     });
-
-    apply('all');
 });
 </script>
 
